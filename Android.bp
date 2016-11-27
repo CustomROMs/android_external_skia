@@ -2,7 +2,6 @@
 
 cc_library_static {
     name: "libskia",
-    host_supported: true,
     cflags: [
         "-U_FORTIFY_SOURCE",
         "-DATRACE_TAG=ATRACE_TAG_VIEW",
@@ -10,6 +9,7 @@ cc_library_static {
         "-DSKIA_IMPLEMENTATION=1",
         "-DSK_PRINT_CODEC_MESSAGES",
         "-D_FORTIFY_SOURCE=1",
+        "-DFIMG2D_ENABLED",
         "-Wno-implicit-fallthrough",
         "-Wno-missing-field-initializers",
         "-Wno-thread-safety-analysis",
@@ -180,6 +180,7 @@ cc_library_static {
         "src/core/SkEdgeBuilder.cpp",
         "src/core/SkEdgeClipper.cpp",
         "src/core/SkExecutor.cpp",
+        "src/core/SkFimgApi4x.cpp",
         "src/core/SkFlattenable.cpp",
         "src/core/SkFont.cpp",
         "src/core/SkFontDescriptor.cpp",
@@ -296,6 +297,7 @@ cc_library_static {
         "src/core/SkTaskGroup.cpp",
         "src/core/SkTextBlob.cpp",
         "src/core/SkThreadID.cpp",
+        "src/core/SkThread_trylock.cpp",
         "src/core/SkTime.cpp",
         "src/core/SkTypeface.cpp",
         "src/core/SkTypefaceCache.cpp",
@@ -981,6 +983,7 @@ cc_defaults {
         "libpiex",
         "libpng",
         "libz",
+        "libfimg4x",
     ],
     static_libs: [
         "libarect",

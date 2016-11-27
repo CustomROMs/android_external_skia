@@ -209,6 +209,15 @@ public:
     */
     SkIRect bounds() const { return SkIRect::MakeWH(this->width(), this->height()); }
 
+#if 1
+    /**
+     *  From SkBitmap.h
+     */
+    int bytesPerPixel() const { return fInfo.bytesPerPixel(); }
+    void* getAddr(int x, int y) const;
+    void* getPixels() const { return const_cast<void*>(fPixels); }
+#endif
+
     /** Returns number of pixels that fit on row. Should be greater than or equal to
         width().
 

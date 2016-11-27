@@ -12,6 +12,14 @@
 #include "SkUtils.h"
 #include "SkXfermodePriv.h"
 
+#if defined(FIMG2D_ENABLED)
+#define FORCE_CPU_WIDTH (100)
+#define FORCE_CPU_HEIGHT (100)
+#include "SkBitmap.h"
+#include "SkBitmapProcShader.h"
+#include "SkFimgApi4x.h"
+#endif
+
 static inline int upscale_31_to_32(int value) {
     SkASSERT((unsigned)value <= 31);
     return value + (value >> 4);
@@ -640,6 +648,14 @@ static bool blit_color(const SkPixmap& device,
     return false;
 }
 
+#if defined(FIMG2D_ENABLED)
+#define FORCE_CPU_WIDTH (100)
+#define FORCE_CPU_HEIGHT (100)
+#include "SkBitmap.h"
+#include "SkBitmapProcShader.h"
+#include "SkFimgApi4x.h"
+#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 
 static void SkARGB32_Blit32(const SkPixmap& device, const SkMask& mask,
@@ -884,10 +900,25 @@ void SkARGB32_Blitter::blitRect(int x, int y, int width, int height) {
     uint32_t    color = fPMColor;
     size_t      rowBytes = fDevice.rowBytes();
 
+#if defined(FIMG2D_ENABLED)
+    int retFimg = 0;
+    if (width > FORCE_CPU_WIDTH && height > FORCE_CPU_HEIGHT)
+        retFimg = FimgARGB32_Rect(fDevice.addr32(0, 0), x, y, width, height, rowBytes, color);
+    else
+        retFimg = 0;
+
+    if (retFimg != FIMGAPI_FINISHED) {
+        while (--height >= 0) {
+            SkBlitRow::Color32(device, device, width, color);
+            device = (uint32_t*)((char*)device + rowBytes);
+        }
+    }
+#else
     while (--height >= 0) {
         SkBlitRow::Color32(device, device, width, color);
         device = (uint32_t*)((char*)device + rowBytes);
     }
+#endif
 }
 
 #if defined _WIN32
