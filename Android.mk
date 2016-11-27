@@ -761,6 +761,20 @@ LOCAL_CFLAGS_arm += \
 	-DSK_ARM_HAS_NEON
 
 endif
+# for FIMG2D acceleration
+ifeq ($(BOARD_USES_SKIA_FIMGAPI),true)
+    LOCAL_CFLAGS += -DFIMG2D_ENABLED
+    LOCAL_SRC_FILES += src/core/SkThread_trylock.cpp
+    LOCAL_C_INCLUDES += $(TOP)/hardware/samsung_slsi-cm/exynos/include
+    ifeq ($(BOARD_USES_FIMGAPI_V4L2),true)
+        LOCAL_CFLAGS += -DFIMG2D_V4L2_ENABLED
+        LOCAL_SRC_FILES += src/core/SkFimgV4L2.cpp
+        LOCAL_SHARED_LIBRARIES += libexynosg2d
+    else
+        LOCAL_SRC_FILES += src/core/SkFimgApi4x.cpp
+        LOCAL_SHARED_LIBRARIES += libfimg
+    endif
+endif
 
 LOCAL_CFLAGS_x86 += \
 	-msse2 \
@@ -832,6 +846,14 @@ LOCAL_SHARED_LIBRARIES := \
 
 ifeq ($(TARGET_HAVE_QC_PERF),true)
         LOCAL_WHOLE_STATIC_LIBRARIES += libqc-skia
+endif
+
+ifeq ($(BOARD_USES_SKIA_FIMGAPI),true)
+    ifeq ($(BOARD_USES_FIMGAPI_V4L2),true)
+        LOCAL_SHARED_LIBRARIES += libexynosg2d
+    else
+        LOCAL_SHARED_LIBRARIES += libfimg
+    endif
 endif
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := \
