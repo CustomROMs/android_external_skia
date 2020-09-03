@@ -20,7 +20,7 @@
 #include "SkBitmap.h"
 #include "SkMallocPixelRef.h"
 #include "SkFlattenable.h"
-#include "SkXfermode.h"
+#include "SkBlendMode.h"
 #include "SkMatrix.h"
 #include "SkBitmap.h"
 #include "SkMask.h"
@@ -47,7 +47,7 @@
 
 //---------------------------------------------------------------------------//
 
-#define FIMGAPI_COMPROMISE_USE true
+//#define FIMGAPI_COMPROMISE_USE true
 
 #define FIMGAPI_FINISHED       (0x1<<0)
 #undef FIMGAPI_DEBUG_MESSAGE

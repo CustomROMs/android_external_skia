@@ -122,7 +122,6 @@ void* SkPixmap::getAddr(int x, int y) const {
                 base += x << 1;
                 break;
             case kAlpha_8_SkColorType:
-            case kIndex_8_SkColorType:
             case kGray_8_SkColorType:
                 base += x;
                 break;

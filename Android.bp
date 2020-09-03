@@ -958,6 +958,7 @@ cc_defaults {
         "libz",
         "libcutils",
         "libnativewindow",
+        "libfimg4x",
     ],
     static_libs: [
         "libarect",

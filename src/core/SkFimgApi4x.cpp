@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#pragma GCC diagnostic ignored "-Wsign-compare"
+
 #define LOG_TAG "SKIA"
 #include <cutils/log.h>
 #include <stdlib.h>
@@ -64,15 +66,11 @@ bool FimgApiCheckPossible(Fimg *fimg)
         return false;
     }
 
-    switch (fimg->xfermode) {
-    case SkXfermode::kSrcOver_Mode:
-    case SkXfermode::kClear_Mode:
-    case SkXfermode::kSrc_Mode:
-    case SkXfermode::kDst_Mode:
-        break;
-    default:
-        return false;
-    }
+    if (fimg->xfermode != (int)SkBlendMode::kSrcOver &&
+        fimg->xfermode != (int)SkBlendMode::kClear &&
+        fimg->xfermode != (int)SkBlendMode::kSrc &&
+        fimg->xfermode != (int)SkBlendMode::kDst)
+      return false;
 
     if (fimg->colorFilter != 0)
         return false;
@@ -104,7 +102,7 @@ bool FimgApiCheckPossible(Fimg *fimg)
 
 bool FimgApiIsDstMode(Fimg *fimg)
 {
-    if (fimg->xfermode == SkXfermode::kDst_Mode)
+    if (fimg->xfermode == (int)SkBlendMode::kDst)
         return true;
     else
         return false;
@@ -118,6 +116,7 @@ bool FimgApiCheckPossible_Clipping(Fimg *fimg)
     return true;
 }
 
+#ifdef FIMGAPI_COMPROMISE_USE
 bool FimgApiCompromise(Fimg *fimg)
 {
     struct compromise_param param;
@@ -157,7 +156,7 @@ bool FimgApiCompromise(Fimg *fimg)
     /* filter_mode setting */
     param.isFilter = fimg->isFilter;
     /* blending mode setting */
-    if (fimg->xfermode == SkXfermode::kSrc_Mode)
+    if (fimg->xfermode == (int)SkBlendMode::kSrc)
         param.isSrcOver = 0;
     else
         param.isSrcOver = 1;
@@ -167,6 +166,7 @@ bool FimgApiCompromise(Fimg *fimg)
 
     return compromiseFimgApi(&param);
 }
+#endif
 
 bool FimgSupportNegativeCoordinate(Fimg *fimg)
 {
@@ -391,7 +391,7 @@ int FimgARGB32_Rect(const uint32_t *device, int x, int y, int width, int height,
 
     fimg.rotate         = 0;
 
-    fimg.xfermode       = SkXfermode::kSrcOver_Mode;
+    fimg.xfermode       = (int)SkBlendMode::kSrcOver;
     fimg.isDither       = false;
     fimg.colorFilter    = 0;
     fimg.matrixType     = 0;
@@ -431,7 +431,7 @@ int FimgRGB16_Rect(const uint32_t *device, int x, int y, int width, int height,
 
     fimg.rotate         = 0;
 
-    fimg.xfermode       = SkXfermode::kSrcOver_Mode;
+    fimg.xfermode       = (int)SkBlendMode::kSrcOver;
     fimg.isDither       = false;
     fimg.colorFilter    = 0;
     fimg.matrixType     = 0;

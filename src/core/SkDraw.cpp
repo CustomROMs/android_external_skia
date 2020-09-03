@@ -848,7 +848,7 @@ void SkDraw::drawRect(const SkRect& prePaintRect, const SkPaint& paint,
                         fimg.srcFH = srcBitmap.height();
                         fimg.srcBPP = srcBitmap.bytesPerPixel();
                         fimg.srcColorFormat = srcBitmap.colorType();
-                        srcBitmap.lockPixels();
+                        //srcBitmap.lockPixels();
                         fimg.srcAddr = (unsigned char *)srcBitmap.getAddr(0, 0);
 
                         if ((r.fLeft < 0) || (r.fTop < 0))
@@ -888,9 +888,7 @@ void SkDraw::drawRect(const SkRect& prePaintRect, const SkPaint& paint,
                             fimg.clipR = 0;
                         }
 
-                        SkXfermode::Mode mode;
-                        SkXfermode::IsMode(paint.getXfermode(), &mode);
-                        fimg.xfermode = mode;
+                        fimg.xfermode = (int)paint.getBlendMode();
                         fimg.isDither = paint.isDither();
                         fimg.isFilter = paint.getFilterQuality() != kNone_SkFilterQuality;
                         fimg.colorFilter = (int)paint.getColorFilter();
@@ -1435,14 +1433,12 @@ void SkDraw::drawBitmap(const SkBitmap& bitmap, const SkMatrix& prematrix,
                     fimg.mskAddr = NULL;
                     fimg.rotate = 0;
 
-                    SkXfermode::Mode mode;
-                    SkXfermode::IsMode(paint.getXfermode(), &mode);
-                    fimg.xfermode = mode;
+                    fimg.xfermode = (int)origPaint.getBlendMode();
 
-                    fimg.isDither = paint.isDither();
-                    fimg.colorFilter = (int)paint.getColorFilter();
+                    fimg.isDither = origPaint.isDither();
+                    fimg.colorFilter = (int)origPaint.getColorFilter();
 
-                    fimg.alpha = paint.getAlpha();
+                    fimg.alpha = origPaint.getAlpha();
                     if (bitmap.isOpaque() && (255 == fimg.alpha))
                         fimg.alpha = 255;
 
