@@ -47,7 +47,7 @@
 
 //---------------------------------------------------------------------------//
 
-#define FIMGAPI_COMPROMISE_USE true
+//#define FIMGAPI_COMPROMISE_USE true
 
 #define FIMGAPI_FINISHED       (0x1<<0)
 #undef FIMGAPI_DEBUG_MESSAGE
