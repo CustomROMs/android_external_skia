@@ -266,7 +266,7 @@ void SkARGB32_Blitter::blitRect(int x, int y, int width, int height) {
 
 #if defined(FIMG2D_ENABLED)
     int retFimg = 0;
-    if (width > FORCE_CPU_WIDTH && height > FORCE_CPU_HEIGHT)
+    if (width > FORCE_CPU_WIDTH && height > FORCE_CPU_HEIGHT && width < 720 && height < 1280)
         retFimg = FimgARGB32_Rect(fDevice.addr32(0, 0), x, y, width, height, rowBytes, color);
     else
         retFimg = 0;
