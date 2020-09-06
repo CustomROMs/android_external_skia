@@ -683,13 +683,16 @@ void SkDraw::drawRect(const SkRect& prePaintRect, const SkPaint& paint,
                 SkShader* tempShader = NULL;
                 SkBitmap srcBitmap;
                 SkShader::TileMode tempTileMode[2];
+                bool isOpaque = (!srcBitmap.isOpaque() && paint.getAlpha() != 255);
                 bool shaderIsBitmap;
                 tempShader = paint.getShader();
                 if (tempShader) {
                     shaderIsBitmap = tempShader->isABitmap(&srcBitmap, NULL, tempTileMode);
 
                     if (shaderIsBitmap && (srcBitmap.isNull() == false) &&
-                        (tempTileMode[0] == SkShader::kClamp_TileMode) && (tempTileMode[1] == SkShader::kClamp_TileMode)) {
+                            (tempTileMode[0] == SkShader::kClamp_TileMode) &&
+                            (tempTileMode[1] == SkShader::kClamp_TileMode) &&
+                            ((int)srcBitmap.colorType() != kRGBA_8888_SkColorType || isOpaque)) {
                         SkRect r;
                         SkIRect fimg_ir;
                         Fimg fimg;
@@ -757,6 +760,8 @@ void SkDraw::drawRect(const SkRect& prePaintRect, const SkPaint& paint,
                         fimg.matrixType = (int)matrix->getType();
                         fimg.matrixSx = matrix->getScaleX();
                         fimg.matrixSy = matrix->getScaleY();
+			ALOGE("%s: srcColorFormat=%d, blendMode=%d, isDither=%d, isFilter=%d, colorFilter=%d, opaque=%d, alpha=%d, w=%d, h=%d", __func__, fimg.srcColorFormat,
+                                                      fimg.xfermode, fimg.isDither, fimg.isFilter, fimg.colorFilter, srcBitmap.isOpaque(), fimg.alpha, ir.width(), ir.height());
 
                         if ((fimg.dstW <= 0)||(fimg.dstH <= 0))
                             fimg.srcAddr = NULL;
@@ -1214,75 +1219,85 @@ void SkDraw::drawBitmap(const SkBitmap& bitmap, const SkMatrix& prematrix,
             SkBlitter* blitter = SkBlitter::ChooseSprite(fDst, *paint, pmap, ix, iy, &allocator);
             if (blitter) {
 #if defined(FIMG2D_ENABLED)
-                SkAAClipBlitterWrapper wrapper(*fRC, blitter);
-                const SkRegion& clip = wrapper.getRgn();
-                SkRegion::Cliperator cliper(clip, SkIRect::MakeXYWH(ix, iy, pmap.width(), pmap.height()));
-                const SkIRect& cr = cliper.rect();
-                memset(&fimg, 0, sizeof(fimg));
-                for (; !cliper.done(); cliper.next()) {
+                bool isOpaque = (!bitmap.isOpaque() && origPaint.getAlpha() != 255);
 
-                    fimg.matrixType = (int)matrix.getType();
-                    fimg.matrixSx = matrix.getScaleX();
-                    fimg.matrixSy = matrix.getScaleY();
+                if (bitmap.colorType() != kRGBA_8888_SkColorType || isOpaque) {
+                    SkAAClipBlitterWrapper wrapper(*fRC, blitter);
+                    const SkRegion& clip = wrapper.getRgn();
+                    SkRegion::Cliperator cliper(clip, SkIRect::MakeXYWH(ix, iy, pmap.width(), pmap.height()));
+                    const SkIRect& cr = cliper.rect();
+                    memset(&fimg, 0, sizeof(fimg));
+                    for (; !cliper.done(); cliper.next()) {
 
-                    fimg.srcX = cr.fLeft - ix;
-                    fimg.srcY = cr.fTop - iy;
-                    fimg.srcW = cr.width();
-                    fimg.srcH = cr.height();
-                    fimg.srcFWStride = bitmap.rowBytes();
-                    fimg.srcFH = bitmap.height();
-                    fimg.srcBPP = bitmap.bytesPerPixel();
-                    fimg.srcColorFormat = bitmap.colorType();
-                    fimg.srcAddr = (unsigned char *)bitmap.getAddr(0, 0);
+                        fimg.matrixType = (int)matrix.getType();
+                        fimg.matrixSx = matrix.getScaleX();
+                        fimg.matrixSy = matrix.getScaleY();
 
-                    fimg.dstX = cr.fLeft;
-                    fimg.dstY = cr.fTop;
-                    fimg.dstW = cr.width();
-                    fimg.dstH = cr.height();
-                    fimg.dstFWStride = fDst.rowBytes();
-                    fimg.dstFH = fDst.height();
-                    fimg.dstBPP = fDst.bytesPerPixel();
-                    fimg.dstColorFormat = fDst.colorType();
-                    fimg.dstAddr = (unsigned char *)fDst.getAddr(0,0);
+                        fimg.srcX = cr.fLeft - ix;
+                        fimg.srcY = cr.fTop - iy;
+                        fimg.srcW = cr.width();
+                        fimg.srcH = cr.height();
+                        fimg.srcFWStride = bitmap.rowBytes();
+                        fimg.srcFH = bitmap.height();
+                        fimg.srcBPP = bitmap.bytesPerPixel();
+                        fimg.srcColorFormat = bitmap.colorType();
+                        fimg.srcAddr = (unsigned char *)bitmap.getAddr(0, 0);
 
-                    if (((cr.fLeft - ix) < 0) || ((cr.fTop - iy) < 0))
-                        fimg.srcAddr = NULL;
+                        fimg.dstX = cr.fLeft;
+                        fimg.dstY = cr.fTop;
+                        fimg.dstW = cr.width();
+                        fimg.dstH = cr.height();
+                        fimg.dstFWStride = fDst.rowBytes();
+                        fimg.dstFH = fDst.height();
+                        fimg.dstBPP = fDst.bytesPerPixel();
+                        fimg.dstColorFormat = fDst.colorType();
+                        fimg.dstAddr = (unsigned char *)fDst.getAddr(0,0);
 
-                    fimg.clipT = cr.fTop;
-                    fimg.clipB = cr.fBottom;
-                    fimg.clipL = cr.fLeft;
-                    fimg.clipR = cr.fRight;
-
-                    fimg.mskAddr = NULL;
-                    fimg.rotate = 0;
-
-                    fimg.xfermode = (int)origPaint.getBlendMode();
-
-                    fimg.isDither = origPaint.isDither();
-                    fimg.colorFilter = (int)origPaint.getColorFilter();
-
-                    fimg.alpha = origPaint.getAlpha();
-                    if (bitmap.isOpaque() && (255 == fimg.alpha))
-                        fimg.alpha = 255;
-
-                    if (fimg.srcAddr != NULL) {
-                        int retFimg = FimgApiStretch(&fimg, __func__);
-
-                        if (retFimg == FIMGAPI_FINISHED) {
+                        if (((cr.fLeft - ix) < 0) || ((cr.fTop - iy) < 0))
                             fimg.srcAddr = NULL;
+
+                        fimg.clipT = cr.fTop;
+                        fimg.clipB = cr.fBottom;
+                        fimg.clipL = cr.fLeft;
+                        fimg.clipR = cr.fRight;
+
+                        fimg.mskAddr = NULL;
+                        fimg.rotate = 0;
+
+                        fimg.xfermode = (int)origPaint.getBlendMode();
+
+                        fimg.isDither = origPaint.isDither();
+                        fimg.colorFilter = (int)origPaint.getColorFilter();
+
+                        fimg.alpha = origPaint.getAlpha();
+                        if (bitmap.isOpaque() && (255 == fimg.alpha))
+                            fimg.alpha = 255;
+
+			ALOGE("%s: srcColorFormat=%d, blendMode=%d, isDither=%d, isFilter=%d, colorFilter=%d, opaque=%d, alpha=%d, w=%d, h=%d", __func__, fimg.srcColorFormat, fimg.xfermode, fimg.isDither, fimg.isFilter, fimg.colorFilter, bitmap.isOpaque(), fimg.alpha, pmap.width(), pmap.height());
+
+                        if (fimg.srcAddr != NULL) {
+                            int retFimg = FimgApiStretch(&fimg, __func__);
+
+                            if (retFimg == FIMGAPI_FINISHED) {
+                                fimg.srcAddr = NULL;
+                            } else {
+                                fimg.srcAddr = NULL;
+                                SkScan::FillIRect(SkIRect::MakeXYWH(ix, iy, pmap.width(),
+                                                  pmap.height()), *fRC, blitter);
+                                return;
+                            }
                         } else {
                             fimg.srcAddr = NULL;
-                            SkScan::FillIRect(SkIRect::MakeXYWH(ix, iy, pmap.width(),
-                                              pmap.height()), *fRC, blitter);
+                            SkScan::FillIRect(SkIRect::MakeXYWH(ix, iy, pmap.width(), pmap.height()),
+                                                                *fRC, blitter);
                             return;
                         }
-                    } else {
-                        fimg.srcAddr = NULL;
-                        SkScan::FillIRect(SkIRect::MakeXYWH(ix, iy, pmap.width(), pmap.height()),
-                                                            *fRC, blitter);
-                        return;
                     }
+                } else {
+                    SkScan::FillIRect(SkIRect::MakeXYWH(ix, iy, pmap.width(), pmap.height()),
+                                     *fRC, blitter);
                 }
+
 #else
                 SkScan::FillIRect(SkIRect::MakeXYWH(ix, iy, pmap.width(), pmap.height()),
                                   *fRC, blitter);
