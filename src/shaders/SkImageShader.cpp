@@ -148,6 +148,27 @@ SkImage* SkImageShader::onIsAImage(SkMatrix* texM, TileMode xy[]) const {
     return const_cast<SkImage*>(fImage.get());
 }
 
+#ifdef SK_SUPPORT_LEGACY_SHADER_ISABITMAP
+bool SkImageShader::onIsABitmap(SkBitmap* texture, SkMatrix* texM, TileMode xy[]) const {
+    const SkBitmap* bm = as_IB(fImage)->onPeekBitmap();
+    if (!bm) {
+        return false;
+    }
+
+    if (texture) {
+        *texture = *bm;
+    }
+    if (texM) {
+        *texM = this->getLocalMatrix();
+    }
+    if (xy) {
+        xy[0] = (TileMode)fTileModeX;
+        xy[1] = (TileMode)fTileModeY;
+    }
+    return true;
+}
+#endif
+
 sk_sp<SkShader> SkImageShader::Make(sk_sp<SkImage> image,
                                     TileMode tx, TileMode ty,
                                     const SkMatrix* localMatrix,

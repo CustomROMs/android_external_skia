@@ -54,6 +54,12 @@ protected:
             this->getLocalMatrix());
     }
 
+#ifdef SK_SUPPORT_LEGACY_SHADER_ISABITMAP
+    bool onIsABitmap(SkBitmap* bitmap, SkMatrix* matrix, TileMode* mode) const override {
+        return fProxyShader->isABitmap(bitmap, matrix, mode);
+    }
+#endif
+
 private:
     SK_FLATTENABLE_HOOKS(SkLocalMatrixShader)
 
